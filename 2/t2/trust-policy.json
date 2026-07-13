@@ -1,0 +1,19 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "ec2.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+        },
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::207567784907:role/cmtr-ook9q7ho-iam-ar-iam_role-assume"
+            },
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}
