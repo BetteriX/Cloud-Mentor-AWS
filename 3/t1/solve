@@ -1,0 +1,2 @@
+1. To connect via ssm i created a iam role that can access it
+2. Then connected with ssh by editing the securityGroup to allow my IP address to access everything
