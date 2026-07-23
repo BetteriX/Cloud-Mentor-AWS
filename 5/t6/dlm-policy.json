@@ -1,0 +1,37 @@
+{
+    "ResourceTypes": [
+        "INSTANCE"
+    ],
+    "TargetTags": [
+        {
+            "Key": "Name",
+            "Value": "cmtr-ook9q7ho-ec2-s-instance"
+        }
+    ],
+    "Schedules": [
+        {
+            "Name": "Hourly-MySQL-Snapshots",
+            "CopyTags": true,
+            "CreateRule": {
+                "Interval": 1,
+                "IntervalUnit": "HOURS",
+                "Scripts": [
+                    {
+                        "Stages": [
+                            "PRE",
+                            "POST"
+                        ],
+                        "ExecutionHandlerService": "AWS_SYSTEMS_MANAGER",
+                        "ExecutionHandler": "MySQL-Script",
+                        "ExecuteOperationOnScriptFailure": false,
+                        "ExecutionTimeout": 60,
+                        "MaximumRetryCount": 2
+                    }
+                ]
+            },
+            "RetainRule": {
+                "Count": 3
+            }
+        }
+    ]
+}

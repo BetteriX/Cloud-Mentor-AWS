@@ -1,0 +1,18 @@
+{
+  "QueueConfigurations": [
+    {
+      "QueueArn": "arn:aws:sqs:eu-west-1:703671904175:cmtr-ook9q7ho-s3-snlt-queue",
+      "Events": ["s3:ObjectCreated:*"],
+      "Filter": {
+        "Key": {
+          "FilterRules": [
+            {
+              "Name": "prefix",
+              "Value": "input/"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

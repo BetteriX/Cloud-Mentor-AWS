@@ -1,0 +1,31 @@
+{
+    "schemaVersion": "2.2",
+    "description": "Start or stop mysql",
+    "parameters": {
+        "command": {
+            "type": "String",
+            "default": "dry-run",
+            "allowedValues": [
+                "pre-script",
+                "post-script",
+                "dry-run"
+            ]
+        }
+    },
+    "mainSteps": [
+        {
+            "action": "aws:runShellScript",
+            "name": "ToggleMySQL",
+            "inputs": {
+                "runCommand": [
+                    "#!/bin/bash",
+                    "if [ \"{{ command }}\" = \"pre-script\" ]; then",
+                    "  systemctl stop mysqld",
+                    "elif [ \"{{ command }}\" = \"post-script\" ]; then",
+                    "  systemctl start mysqld",
+                    "fi"
+                ]
+            }
+        }
+    ]
+}
