@@ -1,0 +1,209 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Template
+
+Parameters:
+  Maintainer:
+    Type: String
+    Default: cmtr-ook9q7ho-maintainer
+    Description: Maintainer
+
+Resources:
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: cmtr-ook9q7ho-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Tags:
+        - Key: Maintainer
+          Value: !Ref Maintainer
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: cmtr-ook9q7ho-role
+      Roles:
+        - !Ref EC2Role
+
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: cmtr-ook9q7ho-vpc
+        - Key: Maintainer
+          Value: !Ref Maintainer
+
+  # PUBLIC SUBNET 1
+  Subnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: eu-west-1a
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: cmtr-ook9q7ho-subnet1
+        - Key: Maintainer
+          Value: !Ref Maintainer
+
+  RouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: cmtr-ook9q7ho-public-rt1
+        - Key: Maintainer
+          Value: !Ref Maintainer
+
+  Route1:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref RouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGW
+
+  RouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref Subnet1
+      RouteTableId: !Ref RouteTable1
+
+  # PUBLIC SUBNET 2
+  Subnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: eu-west-1b
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: cmtr-ook9q7ho-subnet2
+        - Key: Maintainer
+          Value: !Ref Maintainer
+
+  RouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: cmtr-ook9q7ho-public-rt2
+        - Key: Maintainer
+          Value: !Ref Maintainer
+
+  Route2:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref RouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGW
+
+  RouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref Subnet2
+      RouteTableId: !Ref RouteTable2
+
+  # Internet
+  InternetGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: cmtr-ook9q7ho-igw
+        - Key: Maintainer
+          Value: !Ref Maintainer
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGW
+
+  # Security Group for VPC
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: cmtr-ook9q7ho-sg
+      GroupDescription: Security Group allowing SSH and HTTP traffic
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: cmtr-ook9q7ho-sg
+        - Key: Maintainer
+          Value: !Ref Maintainer
+
+  # EC2 Instances
+  Instance1:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}'
+      InstanceType: t2.micro
+      SubnetId: !Ref Subnet1
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      UserData: !Base64
+        Fn::Sub: |
+          #!/bin/sh
+          dnf update -y
+          dnf install -y httpd
+
+          systemctl enable --now httpd
+
+          echo "<h1>Hello from Region eu-west-1a</h1>" > /var/www/html/index.html
+      Tags:
+        - Key: Name
+          Value: cmtr-ook9q7ho-instance1
+        - Key: Maintainer
+          Value: !Ref Maintainer
+
+  Instance2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}'
+      InstanceType: t2.micro
+      SubnetId: !Ref Subnet2
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      UserData: !Base64
+        Fn::Sub: |
+          #!/bin/sh
+          dnf update -y
+          dnf install -y httpd
+
+          systemctl enable --now httpd
+
+          echo "<h1>Hello from Region eu-west-1b</h1>" > /var/www/html/index.html
+      Tags:
+        - Key: Name
+          Value: cmtr-ook9q7ho-instance2
+        - Key: Maintainer
+          Value: !Ref Maintainer
