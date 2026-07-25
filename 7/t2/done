@@ -1,0 +1,6 @@
+The user data run when the db was't up so i had to find the user-data and paste the db initialization manually and then it worked
+User data located here: cat /var/lib/cloud/instance/user-data.txt
+
+and mysql wasnt installed:
+sudo dnf install -y https://dev.mysql.com/get/mysql84-community-release-el9-1.noarch.rpm
+sudo dnf install -y mysql-community-client jq amazon-ssm-agent
