@@ -1,0 +1,11 @@
+ubuntu@epam:~/aws/Cloud-Mentor-AWS/8/t4/9$ kubectl get deployment aws-load-balancer-controller \
+-n kube-system \
+-o yaml | grep -A5 vpc
+        - --aws-vpc-id=vpc-0160878feff7d6a89
+        - --aws-region=eu-west-1
+        image: public.ecr.aws/eks/aws-load-balancer-controller:v3.4.2
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 2
+
+Had to replace the aws-vpc-id

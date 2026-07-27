@@ -1,0 +1,102 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cmtr-ook9q7ho-cj
+  namespace: wordpress
+spec:
+  schedule: "0 0 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: wordpress-sa
+          restartPolicy: OnFailure
+          containers:
+            - name: snapshot-scaler
+              image: bitnami/kubectl:latest
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+
+                  NAMESPACE=wordpress
+                  PVC_NAME=mysql-pvc
+                  SNAPSHOT_NAME=mysql-snapshot-$(date +%Y%m%d%H%M%S)
+
+                  echo "Scaling down WordPress, phpMyAdmin, and MySQL..."
+
+                  kubectl scale deployment wordpress \
+                    --replicas=0 \
+                    -n ${NAMESPACE}
+
+                  kubectl scale deployment phpmyadmin \
+                    --replicas=0 \
+                    -n ${NAMESPACE}
+
+                  kubectl scale statefulset mysql \
+                    --replicas=0 \
+                    -n ${NAMESPACE}
+
+                  echo "Waiting for MySQL pod termination..."
+
+                  kubectl wait \
+                    --for=delete pod/mysql-0 \
+                    -n ${NAMESPACE} \
+                    --timeout=300s || true
+
+
+                  echo "Creating VolumeSnapshot ${SNAPSHOT_NAME}..."
+
+                  cat <<EOF | kubectl apply -f -
+                  apiVersion: snapshot.storage.k8s.io/v1
+                  kind: VolumeSnapshot
+                  metadata:
+                    name: ${SNAPSHOT_NAME}
+                    namespace: ${NAMESPACE}
+                  spec:
+                    volumeSnapshotClassName: ebs-snapclass
+                    source:
+                      persistentVolumeClaimName: ${PVC_NAME}
+                  EOF
+
+
+                  echo "Waiting for snapshot to become ready..."
+
+                  for i in $(seq 1 60); do
+                    READY=$(kubectl get volumesnapshot ${SNAPSHOT_NAME} \
+                      -n ${NAMESPACE} \
+                      -o jsonpath='{.status.readyToUse}')
+
+                    if [ "$READY" = "true" ]; then
+                      echo "Snapshot is ready"
+                      break
+                    fi
+
+                    echo "Snapshot not ready yet..."
+                    sleep 10
+                  done
+
+
+                  if [ "$READY" != "true" ]; then
+                    echo "Snapshot failed to become ready"
+                    kubectl describe volumesnapshot ${SNAPSHOT_NAME} -n ${NAMESPACE}
+                    exit 1
+                  fi
+
+
+                  echo "Scaling applications back up..."
+
+                  kubectl scale statefulset mysql \
+                    --replicas=1 \
+                    -n ${NAMESPACE}
+
+                  kubectl scale deployment wordpress \
+                    --replicas=2 \
+                    -n ${NAMESPACE}
+
+                  kubectl scale deployment phpmyadmin \
+                    --replicas=1 \
+                    -n ${NAMESPACE}
+
+                  echo "Backup cycle completed successfully"

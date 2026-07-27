@@ -1,0 +1,15 @@
+#!/bin/sh
+
+helm repo add eks https://aws.github.io/eks-charts
+helm repo update
+
+kubectl apply -k "github.com/aws/eks-charts/stable/aws-load-balancer-controller/crds?ref=master"
+
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+  -n kube-system \
+  --set clusterName=cmtr-ook9q7ho-eks-cluster \
+  --set region=eu-west-1 \
+  --set vpcId=cmtr-ook9q7ho-vpc \
+  --set serviceAccount.create=true \
+  --set serviceAccount.name=aws-load-balancer-controller \
+  --set "serviceAccount.annotations.eks\.amazonaws\.com/role-arn=arn:aws:iam::863518426750:role/cmtr-alb-controller-irsa-role"

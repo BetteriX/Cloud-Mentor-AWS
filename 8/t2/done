@@ -1,0 +1,26 @@
+{
+    "requiresCompatibilities": [
+        "EXTERNAL"
+    ],
+    "family": "nginx-ecs",
+    "networkMode": "bridge",
+    "cpu": "256",
+    "memory": "512",
+    "executionRoleArn": "arn:aws:iam::856238343966:role/ecsTaskExecutionRole",
+    "containerDefinitions": [
+        {
+            "name": "ook9q7ho-nginx",
+            "image": "nginx",
+            "cpu": 256,
+            "memory": 512,
+            "essential": true,
+            "portMappings": [
+                {
+                    "containerPort": 80,
+                    "hostPort": 5050,
+                    "protocol": "tcp"
+                }
+            ]
+        }
+    ]
+}
