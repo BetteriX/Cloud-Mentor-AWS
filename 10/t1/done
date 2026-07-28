@@ -1,0 +1,3 @@
+reseted cloud-init:
+sudo cloud-init clean
+sudo reboot
