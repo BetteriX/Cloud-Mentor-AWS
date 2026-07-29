@@ -1,0 +1,18 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo "Logging into ECR repository"
+      - REPO_URI=195275646656.dkr.ecr.eu-west-1.amazonaws.com/cmtr-ook9q7ho
+      - aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
+  build:
+    commands:
+      - echo "Building the Docker image"
+      - docker build -t cmtr-ook9q7ho:alpine-httpd .
+  post_build:
+    commands:
+      - echo "Taging the Docker image for ECR"
+      - docker tag cmtr-ook9q7ho:alpine-httpd $REPO_URI:alpine-httpd
+      - echo "Pushing image to ECR"
+      - docker push $REPO_URI:alpine-httpd
