@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sudo systemctl start docker
+
 REPO_URI=195275646656.dkr.ecr.eu-west-1.amazonaws.com/cmtr-ook9q7ho
 
 docker stop alpine-httpd-container || true
