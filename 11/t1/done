@@ -1,0 +1,4 @@
+1. Needed to give more permissions for the ec2:
+AmazonEC2ContainerRegistryReadOnly
+AmazonS3ReadOnlyAccess
+AmazonSSMManagedInstanceCore (Already there)
